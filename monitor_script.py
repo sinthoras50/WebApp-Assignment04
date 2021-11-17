@@ -1,7 +1,7 @@
 import json
 from pandas.core.frame import DataFrame
 import pandas as pd
-import urllib
+import urllib.request
 import os
 from datetime import datetime
 
