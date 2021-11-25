@@ -5,11 +5,11 @@ import urllib.request
 import os
 from datetime import datetime
 
-# API request url
+API_KEY = 'AIzaSyDIBpTtapF9SmOzv8BcBGmITS41B1u-8Yc'
+
 def load(url: str) -> DataFrame:
     error = 'None'
     
-    # Create dataframe to store responses
     df_results = pd.DataFrame(columns=
             ['datetime',
             'url',
@@ -21,21 +21,20 @@ def load(url: str) -> DataFrame:
             'First_Contentful_Paint',
             'Time_to_Interactive',
             'Total_Blocking_Time',
-            'Speed_Index'])  
+            'Speed_Index',
+            'Dom_Size'])  
             
-    # URLs
+    # URL
     df_results.loc[0, 'url'] = url
     df_results.loc[0, 'datetime'] = datetime.now()
 
     try:
-        result = urllib.request.urlopen(f'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}/&strategy=desktop').read().decode('UTF-8')
+        result = urllib.request.urlopen(f'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}/&strategy=desktop&key={API_KEY}').read().decode('UTF-8')
         result_json = json.loads(result)
 
         # Overall Category
         df_results.loc[0, 'Overall_Category'] =\
             result_json['loadingExperience']['overall_category']   
-
-        # Core Web Vitals       
 
         # Largest Contentful Paint    
         df_results.loc[0, 'Largest_Contentful_Paint'] =\
@@ -49,13 +48,9 @@ def load(url: str) -> DataFrame:
         df_results.loc[0, 'Cumulative_Layout_Shift'] =\
         result_json['lighthouseResult']['audits']['cumulative-layout-shift']['displayValue']
 
-        # Additional Loading Metrics 
-
         # First Contentful Paint 
         df_results.loc[0, 'First_Contentful_Paint'] =\
         result_json['lighthouseResult']['audits']['first-contentful-paint']['displayValue']
-
-        # Additional Interactivity Metrics 
 
         # Time to Interactive  
         df_results.loc[0, 'Time_to_Interactive'] =\
@@ -65,23 +60,28 @@ def load(url: str) -> DataFrame:
         df_results.loc[0, 'Total_Blocking_Time'] =\
         result_json['lighthouseResult']['audits']['total-blocking-time']['displayValue']
 
+        # Dom Size
+        df_results.loc[0, 'Dom_Size'] =\
+        result_json['lighthouseResult']['audits']['dom-size']['displayValue']
+
         # Speed Index
         df_results.loc[0, 'Speed_Index'] =\
         result_json['lighthouseResult']['audits']['speed-index']['displayValue']
-
     except Exception as err:
         error = err
-
 
     # Error Logging
     df_results.loc[0, 'HTTP_ERROR'] = error
 
     return df_results
 
-def write_csv(df: DataFrame, mode: str) -> None: 
-    df.to_csv('output.csv', index=False, header=(mode=='w'), mode=mode, encoding='latin-1')
+def write_csv(output: str, df: DataFrame, mode: str) -> None: 
+    df.to_csv(output, index=False, header=(mode=='w'), mode=mode, encoding='latin-1')
 
 
 if __name__ == '__main__':
-    write_csv(load('https://fmph.uniba.sk//'), 'a' if os.path.isfile('output.csv') else 'w')
+    # write_csv('output1.csv', load('https://www.alza.sk/'), 'a' if os.path.isfile('output1.csv') else 'w')
+    # write_csv('output2.csv', load('https://www.alza.sk/ako-nakupit-art13603.htm'), 'a' if os.path.isfile('output2.csv') else 'w')
 
+    write_csv('amazon.csv', load('https://www.amazon.co.uk/'), 'a' if os.path.isfile('amazon.csv') else 'w')
+    write_csv('google.csv', load('https://www.google.com/'), 'a' if os.path.isfile('google.csv') else 'w')
